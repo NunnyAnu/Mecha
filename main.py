@@ -50,13 +50,15 @@ class Action:
         receive_msg = msg.payload.decode()
         if receive_msg == 'isOn':
             res = self.checkcamera()
-            feedback = str(res)
-            self.pubpub(feedback)
             if res:
-                self.checkcam = True
+                feedback = 'on'
+                self.pubpub(feedback)
+            else:
+                feedback = 'off'
+                self.pubpub(feedback)
         
         elif receive_msg == 'isTaken':
-            if not self.checkcam:
+            if not self.checkcamera():
                 self.pubpub('Please Initalize the camera')
                 return
             cap = self.capture()
@@ -90,8 +92,10 @@ class Action:
 
     def checkcamera(self):
         if self.camera.IsGrabbing():
+            self.checkcam = True
             return True
         else:
+            self.checkcam = False
             return False
         
     def capture(self):
