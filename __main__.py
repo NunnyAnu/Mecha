@@ -80,7 +80,6 @@ class BuildAndUploaderBolt:
                     os.remove(self.path_to_3D_file)
                 self.Build_a_Bolt()
                 name_file = 'Bolt_ID' + str(id) + '.glb'
-                self.send_to_GGDrive(name_file)
                 link = self.send_to_GGDrive(name_file)
                 self.sendLink_to_DB(id, self.collection_link, link)
                 os.remove(self.path_to_3D_file)
