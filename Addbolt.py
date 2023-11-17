@@ -2,22 +2,26 @@ import bpy
 import json
 from typing import List
 
-with open('/Users/nunny/Desktop/Mecha/data_size.json', 'r') as openfile:
-    json_object = json.load(openfile)        
-    head_length = json_object["Head_Length"]
-    head_dia = json_object["Head_Diameter"]
-    thread_length = json_object["Thread_Length"]
-    thread_dia = round(json_object["Thread_Diameter"])
-    space_length = json_object["Space_Length"]
-
+def input_DataSize(path_to_datafile):
+    with open(path_to_datafile, 'r') as openfile:
+        json_object = json.load(openfile)        
+        head_length = json_object["Head_Length"]
+        head_dia = json_object["Head_Diameter"]
+        thread_length = json_object["Thread_Length"]
+        thread_dia = round(json_object["Thread_Diameter"])
+        space_length = json_object["Space_Length"]
+        head_type = json_object["type_head"]
+        bit_type = json_object["type_bit"]
+    return head_type, bit_type, head_length, head_dia, thread_length, thread_dia, space_length
 
 bpy.ops.object.select_all(action='DESELECT')
 bpy.ops.object.select_by_type(type='MESH')
 bpy.ops.object.delete()
 
+
 class BuildaBolt:
-    def __init__(self, head_type, bit_type, head_length, head_dia, thread_length, thread_dia, space_length):
-      self.bf_Model_Type = 'bf_Model_Bolt'   #fix
+    def __init__(self, head_type, bit_type, head_length, head_dia, thread_length, thread_dia, space_length, path_to_savefile):
+      self.bf_Model_Type = 'bf_Model_Bolt'   
       self.bf_Head_Type = head_type          #select on ui
       self.bf_Bit_Type = bit_type            #select on ui 
       self.bf_Shank_Length = space_length    #space
@@ -31,9 +35,10 @@ class BuildaBolt:
       self.bf_Pan_Head_Dia = head_dia       #head dia
       self.bf_Thread_Length = thread_length #thread length
       self.bf_Major_Dia = thread_dia        #thread
-      self.bf_Crest_Percent = 10            #thread fix   
-      self.bf_Root_Percent = 10             #thread fix
-      self.bf_Div_Count = 36                #thread fix
+      self.bf_Crest_Percent = 10            #thread  
+      self.bf_Root_Percent = 10             #thread
+      self.bf_Div_Count = 36                #thread
+      self.path_to_savefile = path_to_savefile
 
     def size_thread(self):
         #m1.4p0.3, m1.6p0.35, m2p0.4, m2.5p0.45
@@ -60,32 +65,32 @@ class BuildaBolt:
                         'M6':[3.4, 6.7], 'M8':[4.4, 8.4], 'M10':[5.7, 10],
                         'M12':[5.7, 10], 'M14':[5.7, 10], 'M16':[5.7, 10]}
                         
-        if self.bf_Head_Type == 'hex':
+        if self.bf_Head_Type == 'HEX':
             Head_Type = 'bf_Head_Hex'
-        elif self.bf_Head_Type == 'cap':
+        elif self.bf_Head_Type == 'CAP':
              Head_Type = 'bf_Head_Cap'
-        elif self.bf_Head_Type == 'dome':
+        elif self.bf_Head_Type == 'DOME':
              Head_Type = 'bf_Head_Dome'
-        elif self.bf_Head_Type == 'pan':
+        elif self.bf_Head_Type == 'PAN':
              Head_Type = 'bf_Head_Pan'
-        elif self.bf_Head_Type == 'countersink':
+        elif self.bf_Head_Type == 'COUNTERSINK':
              Head_Type = 'bf_Head_CounterSink'
             
         
         boltM = 'M' + str(self.bf_Major_Dia)
-        if self.bf_Bit_Type == 'allen':
+        if self.bf_Bit_Type == 'ALLEN':
             Bit_Type = 'bf_Bit_Allen'
             depth = Allen_bit[boltM][0] 
             size_float = Allen_bit[boltM][1]
             size_str = "bf_Torx_T10" 
             
-        elif self.bf_Bit_Type == 'torx':
+        elif self.bf_Bit_Type == 'TORX':
             Bit_Type ='bf_Bit_Torx'
             depth = Torx_bit[boltM][0]
             size_float = Torx_bit[boltM][1]
             size_str = "bf_Torx_T" + str(Torx_bit[boltM][1])
             
-        elif self.bf_Bit_Type == 'phillips':
+        elif self.bf_Bit_Type == 'PHILLIPS':
             Bit_Type ='bf_Bit_Phillips'
             depth = Phillips_bit[boltM][0]
             size_float = Phillips_bit[boltM][1]
@@ -99,7 +104,7 @@ class BuildaBolt:
         return Head_Type, Bit_Type, depth, size_float, size_str
         
 
-    def addBolt(self):    
+    def addBolt(self):
         pitch, minor = self.size_thread()
         Head_Type, Bit_Type, depth, size_float, size_str = self.size_head()                                            
         bpy.ops.mesh.bolt_add(align='WORLD', location=(0, 0, 0), rotation=(0, 0, 0), change=True, 
@@ -128,27 +133,30 @@ class BuildaBolt:
                                             bf_Crest_Percent = 10,            #thread    
                                             bf_Root_Percent = 10,             #thread
                                             bf_Div_Count = 36)                #fix 
+
+    def exportBolt(self):
+        for obj in bpy.context.scene.objects:
+            obj.select_set(True)
+        bpy.ops.export_scene.gltf(
+            filepath = self.path_to_savefile,
+            export_format='GLB',
+            export_apply=True,  # Apply modifiers
+            export_colors=True,  # Export vertex colors
+            export_normals=True,  # Export normals
+            export_cameras=True,  # Export cameras
+            export_lights=True,  # Export lights
+            export_yup=True  # Y-axis up
+        )
+
+if __name__ == '__main__':
+    path_to_savefile ="/Users/nunny/Desktop/mechatronic_blender/3DModel/addbolt.glb" 
+    path_to_datafile='/Users/nunny/Desktop/mechatronic_blender/data_size.json'
+    head_type, bit_type, head_length, head_dia, thread_length, thread_dia, space_length = input_DataSize(path_to_datafile)
+    b1 = BuildaBolt(head_type, bit_type, head_length, head_dia, thread_length, thread_dia, space_length, path_to_savefile)
+    b1.addBolt()
+    b1.exportBolt()
+    
  
-b1 = BuildaBolt('hex', 'none', head_length, head_dia, thread_length, thread_dia, space_length)
-b1.addBolt()
- 
- 
 
 
-# Set the file path and name for the exported file
-file_path = "/Users/nunny/Desktop/Mecha/3DModel/bolt.fbx"
 
-# Select the objects you want to export
-# You can iterate through objects or select them manually
-# For example, select all objects
-for obj in bpy.context.scene.objects:
-    obj.select_set(True)
-
-# Export selected objects to FBX format
-bpy.ops.export_scene.fbx(
-    filepath=file_path,
-    use_selection=True,
-    axis_forward='-Z',  # Adjust axis settings if needed
-    axis_up='Y',
-    add_leaf_bones=False  # Additional options as needed
-)
