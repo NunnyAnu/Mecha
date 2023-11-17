@@ -35,10 +35,10 @@ class BuildAndUploaderBolt:
         SCOPES = ['https://www.googleapis.com/auth/drive']
         service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
         file_metadata = {
-            'name': 'bolt.fbx',
+            'name': 'save_bolt.glb',
             'parents': ['1QlFw3dR1iYkuW86B8YEBYduxaJIX4iIQ']
         }
-        media_content = MediaFileUpload(self.path_to_3D_file, mimetype='model/fbx')
+        media_content = MediaFileUpload(self.path_to_3D_file, mimetype='model/glb')
         file = service.files().create(
             body=file_metadata,
             media_body=media_content
@@ -56,18 +56,23 @@ class BuildAndUploaderBolt:
     def run_loop(self):
         Collection = self.connect_to_Mongodb()
         count, json_object = self.get_DataSize(Collection)
-        while Collection.count_documents({}) != count:
-            with open(self.path_to_data_file, "w") as outfile:
-                outfile.write(json_object)
-            if os.path.isfile(self.path_to_3D_file):
+        doc_count = Collection.count_documents({})
+        while True:
+            current_count = Collection.count_documents({})
+            if current_count != doc_count:
+                print("s")
+                with open(self.path_to_data_file, "w") as outfile:
+                    outfile.write(json_object)
+                if os.path.isfile(self.path_to_3D_file):
+                    os.remove(self.path_to_3D_file)
+                self.Build_a_Bolt()
+                self.send_to_GGDrive()
                 os.remove(self.path_to_3D_file)
-            self.Build_a_Bolt()
-            self.send_to_GGDrive()
-            os.remove(self.path_to_3D_file3D_file)
+            doc_count = current_count
 
 
 if __name__ == "__main__":
     data = BuildAndUploaderBolt(
-        path_to_3D_file = "/Users/nunny/Desktop/Mecha/3DModel/bolt.fbx",    
+        path_to_3D_file = "/Users/nunny/Desktop/Mecha/3DModel/save_bolt.glb",    
         path_to_data_file = "/Users/nunny/Desktop/Mecha/data_size.json")
     data.run_loop()

@@ -149,8 +149,8 @@ class BuildaBolt:
         )
 
 if __name__ == '__main__':
-    path_to_savefile ="/Users/nunny/Desktop/mechatronic_blender/3DModel/addbolt.glb" 
-    path_to_datafile='/Users/nunny/Desktop/mechatronic_blender/data_size.json'
+    path_to_savefile ="/Users/nunny/Desktop/Mecha/3DModel/save_bolt.glb" 
+    path_to_datafile='/Users/nunny/Desktop/Mecha/data_size.json'
     head_type, bit_type, head_length, head_dia, thread_length, thread_dia, space_length = input_DataSize(path_to_datafile)
     b1 = BuildaBolt(head_type, bit_type, head_length, head_dia, thread_length, thread_dia, space_length, path_to_savefile)
     b1.addBolt()
